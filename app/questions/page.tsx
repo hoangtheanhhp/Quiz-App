@@ -11,9 +11,13 @@ type Props = {
   };
 };
 
-async function getData(category: string, difficulty: string, limit: string) {
+async function getData(category: string, limit: string) {
+  // Replace the API endpoint with your Flask API
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
   const res = await fetch(
-    `https://the-trivia-api.com/api/questions?categories=${category}&limit=${limit}&type=multiple&difficulty=${difficulty}`
+    `${apiUrl}/questions?category=${category}&limit=${limit}&status=1`, {
+      cache: 'no-store'
+    }
   );
 
   if (!res.ok) {
@@ -25,7 +29,7 @@ async function getData(category: string, difficulty: string, limit: string) {
 
 const QuestionsPage = async ({ searchParams }: Props) => {
   const category = searchParams.category as string;
-  const difficulty = searchParams.difficulty;
+  const difficulty = searchParams.difficulty;  // Assuming this is being used for filtering in your component
   const limit = searchParams.limit;
 
   const validateCategory = (category: string) => {
@@ -51,15 +55,19 @@ const QuestionsPage = async ({ searchParams }: Props) => {
     return redirect("/");
   }
 
-  const response = await getData(category, difficulty, limit);
-
-  return (
-    <Questions
-      questions={response}
-      limit={parseInt(limit, 10)}
-      category={category}
-    />
-  );
+  try {
+    const response = await getData(category, limit);
+    return (
+      <Questions
+        questions={response}  // Assuming Questions component can handle the structure
+        limit={parseInt(limit, 10)}
+        category={category}
+      />
+    );
+  } catch (error) {
+    console.error("Error fetching questions:", error);
+    return <p>Failed to load questions. Please try again later.</p>;
+  }
 };
 
 export default QuestionsPage;

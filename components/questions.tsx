@@ -13,15 +13,13 @@ import { toast } from "sonner";
 type Props = {
   questions: {
     category: string;
-    id: string;
-    correctAnswer: string;
-    incorrectAnswers: string[];
+    url: string;
     question: string;
-    tags: string[];
-    type: string;
-    difficulty: string;
-    regions: [];
-    isNiche: boolean;
+    img_url?: string;
+    img_path?: string;
+    choices: string[];
+    answer: string;
+    comment: string[];
   }[];
   limit: number;
   category: string;
@@ -36,30 +34,22 @@ const Questions = ({ questions, limit, category }: Props) => {
   const { onOpen } = useModalStore();
   const [key, setKey] = useState(0);
 
-  const handleShuffle = (correctAnswer: string, incorrectAnswers: string[]) => {
-    const shuffledAnswers = [...incorrectAnswers];
-
+  const handleShuffle = (choices: string[]) => {
+    const shuffledAnswers = [...choices];
     shuffledAnswers.sort(() => Math.random() - 0.5);
-    const randomIndex = Math.floor(
-      Math.random() * (shuffledAnswers.length + 1)
-    );
-    shuffledAnswers.splice(randomIndex, 0, correctAnswer);
-
     return shuffledAnswers;
   };
 
   const handleCheck = (answer: string, isTimeUp: boolean = false) => {
     setSelected(answer);
-    if (answer === questions[curr].correctAnswer && !isTimeUp)
-      setScore(score + 1);
+    if (answer === questions[curr].answer && !isTimeUp) setScore(score + 1);
   };
 
   const handleSelect = (i: string) => {
-    if (selected === i && selected === questions[curr].correctAnswer)
-      return "correct";
-    else if (selected === i && selected !== questions[curr].correctAnswer)
+    if (selected === i && selected === questions[curr].answer) return "correct";
+    else if (selected === i && selected !== questions[curr].answer)
       return "incorrect";
-    else if (i === questions[curr].correctAnswer) return "correct";
+    else if (i === questions[curr].answer) return "correct";
   };
 
   const handleNext = () => {
@@ -80,18 +70,13 @@ const Questions = ({ questions, limit, category }: Props) => {
   };
 
   const handleTimeUp = () => {
-    handleCheck(questions[curr].correctAnswer, true);
+    handleCheck(questions[curr].answer, true);
     toast.info("You ran out of Time!");
   };
 
   useEffect(() => {
     if (questions?.length >= 5) {
-      setAnswers(
-        handleShuffle(
-          questions[curr].correctAnswer,
-          questions[curr].incorrectAnswers
-        )
-      );
+      setAnswers(handleShuffle(questions[curr].choices));
     }
     setProgressValue((100 / limit) * (curr + 1));
   }, [curr, questions, limit]);
@@ -111,7 +96,7 @@ const Questions = ({ questions, limit, category }: Props) => {
         <CountdownCircleTimer
           key={key}
           isPlaying={!selected}
-          duration={15}
+          duration={1000}
           size={45}
           strokeWidth={4}
           colors={["#004777", "#F7B801", "#A30000", "#A30000"]}
@@ -125,14 +110,14 @@ const Questions = ({ questions, limit, category }: Props) => {
       </div>
       <Separator />
       <div className="min-h-[50vh] py-4 xl:py-8 px-3 md:px-5 w-full">
-        <h2 className="text-2xl text-center font-medium">{`Q${curr + 1}. ${
+        <h3 className="font-medium">{`Q${curr + 1}. ${
           questions[curr].question
-        }`}</h2>
+        }`}</h3>
         <div className="py-4 md:py-5 xl:py-7 flex flex-col gap-y-3 md:gap-y-5">
           {answers.map((answer, i) => (
             <button
               key={i}
-              className={`option ${selected && handleSelect(answer)}`}
+              className={`option text-left ${selected && handleSelect(answer)}`}
               disabled={!!selected}
               onClick={() => handleCheck(answer)}
             >
